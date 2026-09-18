@@ -1,6 +1,6 @@
 # Trading 212 MCP Server
 
-An MCP (Model Context Protocol) server that connects AI assistants to your Trading 212 account. View your portfolio, check balances, search instruments, browse order history, and optionally place trades — all through natural language.
+An MCP (Model Context Protocol) server that connects AI assistants to your Trading 212 account. View your portfolio, check balances, search instruments, view order history, and place orders directly from AI interfaces.
 
 **Works with:** Claude Desktop · Cursor · Antigravity IDE · ChatGPT · Gemini
 
@@ -32,8 +32,8 @@ TRADING212_API_KEY=your_key TRADING212_TRANSPORT=http npx trading212-mcp
 
 ### Run locally
 ```bash
-git clone https://github.com/your-username/mcp-tools.git
-cd mcp-tools/trading212-mcp
+git clone https://github.com/otsab19/trading212-mcp.git
+cd trading212-mcp
 npm install
 npm run build
 
@@ -111,25 +111,22 @@ Add to your MCP configuration:
 
 ChatGPT connects to **remote HTTPS MCP servers**. You'll need to:
 
-1. **Start the server in HTTP mode** (locally or on a host):
+1. **Start the server in HTTP mode** (locally or on a cloud host):
    ```bash
    TRADING212_API_KEY=your_key TRADING212_TRANSPORT=http PORT=3212 npm start
    ```
 
-2. **Expose it via HTTPS** — use one of these options:
+2. **Expose it via HTTPS** — see free deployment options below or use a quick tunnel:
 
-   **Option A: ngrok (quickest for testing)**
-   ```bash
-   ngrok http 3212
-   # This gives you a URL like https://abc123.ngrok.io
-   ```
-
-   **Option B: Cloudflare Tunnel (free, production-ready)**
+   **Option A: Cloudflare Tunnel (free, zero latency, no sleep)**
    ```bash
    cloudflared tunnel --url http://localhost:3212
    ```
 
-   **Option C: Deploy to a cloud host** (Render, Railway, Fly.io, etc.)
+   **Option B: ngrok (quick test)**
+   ```bash
+   ngrok http 3212
+   ```
 
 3. **Add to ChatGPT:**
    - Go to **Settings → Connectors** (or **Settings → MCP Servers**)
@@ -150,7 +147,6 @@ Google Gemini also requires remote HTTPS MCP servers.
    - Go to **Settings & help → Connected Apps**
    - Click **Add a custom app**
    - Enter your HTTPS MCP server URL: `https://your-domain.com/sse`
-   - Requires a Gemini Spark/Pro/Ultra subscription
 
    **Gemini Enterprise:**
    - Go to **Team settings → Connected apps → Add MCP Server**
@@ -176,6 +172,76 @@ Google Gemini also requires remote HTTPS MCP servers.
 | `/sse` | `GET` | SSE stream — connect here to start an MCP session |
 | `/messages?sessionId=xxx` | `POST` | Send JSON-RPC messages to the server |
 | `/health` | `GET` | Health check (returns server status) |
+
+## ☁️ Free "No-Sleep" Deployment Options
+
+ChatGPT and Gemini require an always-on remote HTTPS server. Here are the best **free** hosting solutions that avoid cold-start delays:
+
+### Option 1: Koyeb (Recommended — Free Always-On, No Sleep)
+
+[Koyeb](https://koyeb.com) provides a free **Nano instance** (512MB RAM, 0.1 vCPU) that **never sleeps** or spins down.
+
+1. Create a free account at [koyeb.com](https://koyeb.com)
+2. Click **Create Service** → Select **GitHub**
+3. Select this repository (`trading212-mcp`)
+4. Build type: **Dockerfile**
+5. Add Environment Variables:
+   - `TRADING212_API_KEY` = your API key
+   - `TRADING212_ENV` = `demo` (or `live`)
+   - `TRADING212_TRANSPORT` = `http`
+   - `PORT` = `3212`
+6. Deploy — Koyeb provides a free HTTPS domain (e.g. `https://xxx.koyeb.app`)
+7. Your MCP SSE URL is: `https://xxx.koyeb.app/sse`
+
+---
+
+### Option 2: Render with Keep-Alive Ping (Free 24/7)
+
+Render's free web service spins down after 15 minutes of inactivity. However, you can prevent it from ever sleeping for free:
+
+1. Deploy to [render.com](https://render.com) using the included `Dockerfile`
+2. Set env vars: `TRADING212_API_KEY`, `TRADING212_TRANSPORT=http`, `PORT=3212`
+3. Get your Render URL (e.g. `https://trading212-mcp.onrender.com`)
+4. **Prevent Sleep:** Set up a free monitor on [cron-job.org](https://cron-job.org) or [UptimeRobot](https://uptimerobot.com) to ping `https://trading212-mcp.onrender.com/health` every **5 to 10 minutes**.
+5. Render's 750 free monthly hours cover 24/7 uptime for the whole month.
+
+---
+
+### Option 3: Cloudflare Tunnel (`cloudflared` on local Mac/PC)
+
+If you already run a computer or home server (Raspberry Pi/Mac mini), Cloudflare Tunnel exposes your local server to the internet over secure HTTPS for free:
+
+```bash
+# Install cloudflared
+brew install cloudflare/cloudflare/cloudflared
+
+# Start your local server in HTTP mode
+TRADING212_API_KEY=your_key TRADING212_TRANSPORT=http npm start
+
+# In a separate terminal, create a free public HTTPS tunnel
+cloudflared tunnel --url http://localhost:3212
+```
+Use the output URL (`https://xxx.trycloudflare.com/sse`) in ChatGPT or Gemini.
+
+---
+
+### Option 4: Oracle Cloud "Always Free" VPS
+
+Oracle Cloud offers a completely free, 24/7 persistent Linux VM (4 ARM cores, 24GB RAM) with no sleep or inactivity timeouts:
+
+1. Create an **Oracle Cloud Always Free** account
+2. Launch a Ubuntu VM
+3. Install Docker: `sudo apt update && sudo apt install docker.io -y`
+4. Run your container:
+   ```bash
+   docker run -d \
+     -p 80:3212 \
+     -e TRADING212_API_KEY="your_key" \
+     -e TRADING212_TRANSPORT="http" \
+     -e PORT="3212" \
+     --name trading212-mcp \
+     otsab19/trading212-mcp
+   ```
 
 ## 🛡️ Safety
 
@@ -209,57 +275,3 @@ Built following [Matt Pocock's AI Hero MCP patterns](https://www.aihero.dev):
 ## 📄 License
 
 MIT
-
----
-
-## ☁️ Free Deployment Options
-
-You need to deploy as an HTTPS server for ChatGPT and Gemini. Here are the **free** options:
-
-### Option 1: Render (Recommended — easiest)
-
-1. Push this repo to GitHub
-2. Go to [render.com](https://render.com) → **New** → **Web Service**
-3. Connect your GitHub repo, point to the `trading212-mcp/` directory
-4. Render will auto-detect the `Dockerfile`
-5. Add environment variable: `TRADING212_API_KEY` = your key
-6. Deploy — you'll get a free URL like `https://trading212-mcp-xxxx.onrender.com`
-7. Use `https://trading212-mcp-xxxx.onrender.com/sse` as your MCP URL in ChatGPT/Gemini
-
-> ⚠️ **Note:** Render free tier spins down after 15 min of inactivity (first request takes ~30s to wake up).
-
-### Option 2: Railway
-
-1. Push to GitHub
-2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub**
-3. Set env vars in the Railway dashboard
-4. Get your `*.up.railway.app` URL
-5. Use `https://your-app.up.railway.app/sse` as your MCP URL
-
-### Option 3: Fly.io
-
-```bash
-# Install flyctl
-brew install flyctl
-
-# From the trading212-mcp/ directory:
-fly launch
-fly secrets set TRADING212_API_KEY=your_key
-fly deploy
-```
-
-### Option 4: Cloudflare Tunnel (run locally, expose free)
-
-Keep the server on your Mac but expose it to the internet for free:
-```bash
-# Install cloudflared
-brew install cloudflare/cloudflare/cloudflared
-
-# Start your server
-TRADING212_API_KEY=your_key TRADING212_TRANSPORT=http npm start
-
-# In another terminal, create a tunnel
-cloudflared tunnel --url http://localhost:3212
-# Gives you: https://random-words.trycloudflare.com
-# Use: https://random-words.trycloudflare.com/sse
-```
