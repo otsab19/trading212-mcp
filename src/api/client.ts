@@ -71,6 +71,9 @@ export class Trading212Client {
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
 
+    process.stderr.write(`[API] 📡 ${method} ${path}\n`);
+    const startTime = Date.now();
+
     const headers: Record<string, string> = {
       Authorization: this.apiKey,
       "Content-Type": "application/json",
@@ -89,6 +92,7 @@ export class Trading212Client {
     try {
       response = await fetch(url, init);
     } catch (error) {
+      process.stderr.write(`[API] ❌ ${method} ${path} - Network Error\n`);
       throw new Trading212Error(
         `Network error calling ${method} ${path}: ${error instanceof Error ? error.message : "Unknown error"}`,
         undefined,
@@ -96,6 +100,11 @@ export class Trading212Client {
         error,
       );
     }
+
+    const duration = Date.now() - startTime;
+    process.stderr.write(
+      `[API] ${response.ok ? "✅" : "⚠️"} ${method} ${path} - ${response.status} (${duration}ms)\n`,
+    );
 
     // Track rate limits from headers
     this.updateRateLimitInfo(response);

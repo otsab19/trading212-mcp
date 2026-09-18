@@ -75,6 +75,7 @@ if (transportMode === "http") {
 
   // SSE endpoint — client connects here to receive server→client messages
   app.get("/sse", async (req, res) => {
+    process.stderr.write(`[HTTP] 🔌 New SSE connection established\n`);
     const server = createServer(client, allowTrading);
     const transport = new SSEServerTransport("/messages", res);
     const sessionId = transport.sessionId;
@@ -82,6 +83,7 @@ if (transportMode === "http") {
 
     // Clean up on disconnect
     req.on("close", () => {
+      process.stderr.write(`[HTTP] 🔌 SSE connection closed (Session: ${sessionId})\n`);
       transports.delete(sessionId);
     });
 
@@ -93,15 +95,20 @@ if (transportMode === "http") {
     const sessionId = req.query.sessionId as string;
 
     if (!sessionId) {
+      process.stderr.write(`[HTTP] ⚠️ Rejected POST /messages without sessionId\n`);
       res.status(400).json({ error: "Missing sessionId query parameter" });
       return;
     }
 
     const transport = transports.get(sessionId);
     if (!transport) {
+      process.stderr.write(`[HTTP] ⚠️ Rejected POST /messages for unknown session: ${sessionId}\n`);
       res.status(404).json({ error: "Session not found. Connect to /sse first." });
       return;
     }
+
+    const method = req.body?.method || 'unknown';
+    process.stderr.write(`[HTTP] 📩 Received JSON-RPC message (Method: ${method})\n`);
 
     await transport.handlePostMessage(req, res, req.body);
   });
