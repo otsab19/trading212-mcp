@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: trading212-mcp
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: TRADING212_API_KEY
+        sync: false  # You'll set this in the Render dashboard
+      - key: TRADING212_ENV
+        value: demo
+      - key: TRADING212_ALLOW_TRADING
+        value: "false"
+      - key: TRADING212_TRANSPORT
+        value: http
+      - key: PORT
+        value: "3212"

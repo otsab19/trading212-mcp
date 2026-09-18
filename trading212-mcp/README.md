@@ -209,3 +209,57 @@ Built following [Matt Pocock's AI Hero MCP patterns](https://www.aihero.dev):
 ## 📄 License
 
 MIT
+
+---
+
+## ☁️ Free Deployment Options
+
+You need to deploy as an HTTPS server for ChatGPT and Gemini. Here are the **free** options:
+
+### Option 1: Render (Recommended — easiest)
+
+1. Push this repo to GitHub
+2. Go to [render.com](https://render.com) → **New** → **Web Service**
+3. Connect your GitHub repo, point to the `trading212-mcp/` directory
+4. Render will auto-detect the `Dockerfile`
+5. Add environment variable: `TRADING212_API_KEY` = your key
+6. Deploy — you'll get a free URL like `https://trading212-mcp-xxxx.onrender.com`
+7. Use `https://trading212-mcp-xxxx.onrender.com/sse` as your MCP URL in ChatGPT/Gemini
+
+> ⚠️ **Note:** Render free tier spins down after 15 min of inactivity (first request takes ~30s to wake up).
+
+### Option 2: Railway
+
+1. Push to GitHub
+2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub**
+3. Set env vars in the Railway dashboard
+4. Get your `*.up.railway.app` URL
+5. Use `https://your-app.up.railway.app/sse` as your MCP URL
+
+### Option 3: Fly.io
+
+```bash
+# Install flyctl
+brew install flyctl
+
+# From the trading212-mcp/ directory:
+fly launch
+fly secrets set TRADING212_API_KEY=your_key
+fly deploy
+```
+
+### Option 4: Cloudflare Tunnel (run locally, expose free)
+
+Keep the server on your Mac but expose it to the internet for free:
+```bash
+# Install cloudflared
+brew install cloudflare/cloudflare/cloudflared
+
+# Start your server
+TRADING212_API_KEY=your_key TRADING212_TRANSPORT=http npm start
+
+# In another terminal, create a tunnel
+cloudflared tunnel --url http://localhost:3212
+# Gives you: https://random-words.trycloudflare.com
+# Use: https://random-words.trycloudflare.com/sse
+```
