@@ -33,8 +33,8 @@ export class Trading212Client {
   private rateLimitInfo: RateLimitInfo | null = null;
 
   constructor(config: Trading212Config) {
-    this.apiKey = config.apiKey;
-    this.apiSecret = config.apiSecret;
+    this.apiKey = config.apiKey.trim();
+    this.apiSecret = config.apiSecret?.trim();
     this.baseUrl =
       config.environment === "live"
         ? "https://live.trading212.com"
@@ -75,6 +75,16 @@ export class Trading212Client {
     const url = `${this.baseUrl}${path}`;
 
     process.stderr.write(`[API] 📡 ${method} ${path}\n`);
+    if (path.includes("account/info")) {
+      process.stderr.write(
+        `[API] 🔑 Auth mode: ${
+          this.apiSecret
+            ? `Basic (Key len: ${this.apiKey.length}, Secret len: ${this.apiSecret.length})`
+            : "API Key only (No secret loaded)"
+        }\n`,
+      );
+    }
+    
     const startTime = Date.now();
 
     const authHeader = this.apiSecret
