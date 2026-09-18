@@ -15,6 +15,7 @@ import {
 
 export interface Trading212Config {
   apiKey: string;
+  apiSecret?: string;
   environment: "demo" | "live";
 }
 
@@ -28,10 +29,12 @@ interface RateLimitInfo {
 export class Trading212Client {
   private readonly baseUrl: string;
   private readonly apiKey: string;
+  private readonly apiSecret?: string;
   private rateLimitInfo: RateLimitInfo | null = null;
 
   constructor(config: Trading212Config) {
     this.apiKey = config.apiKey;
+    this.apiSecret = config.apiSecret;
     this.baseUrl =
       config.environment === "live"
         ? "https://live.trading212.com"
@@ -74,8 +77,12 @@ export class Trading212Client {
     process.stderr.write(`[API] 📡 ${method} ${path}\n`);
     const startTime = Date.now();
 
+    const authHeader = this.apiSecret
+      ? `Basic ${Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString("base64")}`
+      : this.apiKey;
+
     const headers: Record<string, string> = {
-      Authorization: this.apiKey,
+      Authorization: authHeader,
       "Content-Type": "application/json",
     };
 

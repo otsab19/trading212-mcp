@@ -24,6 +24,7 @@ import { createServer } from "./server.js";
 // ─── Configuration ──────────────────────────────────────
 
 const apiKey = process.env.TRADING212_API_KEY;
+const apiSecret = process.env.TRADING212_API_SECRET;
 
 if (!apiKey) {
   process.stderr.write(
@@ -43,7 +44,7 @@ const port = parseInt(process.env.PORT || "3212", 10);
 
 // ─── Startup ────────────────────────────────────────────
 
-const client = new Trading212Client({ apiKey, environment });
+const client = new Trading212Client({ apiKey, apiSecret, environment });
 
 process.stderr.write(
   `🚀 Trading 212 MCP Server starting...\n` +

@@ -49,6 +49,7 @@ TRADING212_API_KEY=your_key npm run start:http
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `TRADING212_API_KEY` | ✅ | — | Your Trading 212 API key |
+| `TRADING212_API_SECRET` | ❌ | — | Your API Secret (required for newer API keys) |
 | `TRADING212_ENV` | ❌ | `demo` | `demo` (paper trading) or `live` (real money) |
 | `TRADING212_ALLOW_TRADING` | ❌ | `false` | Set to `true` to enable order placement |
 | `TRADING212_TRANSPORT` | ❌ | `stdio` | `stdio` (local) or `http` (remote SSE server) |
